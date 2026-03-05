@@ -1,0 +1,46 @@
+Architecture & System Design Questions
+=====================================================================================================================
+
+Q1. How would you scale this service to handle 10,000+ requests per second?
+Ans: To make the service to handle 10K+ requests per second, we can do multiple things:
+        - we can containerise the system with multiple workers, put behind a load balancer, and can use autoscaling
+        - in production we should use a robust database like PostgreSQL with replicas (read-replica for read-only workflows)
+        - make the non-critical tasks, if any, async, maybe use Kafka or RabbitMQ type implementation
+        - further, we can add cache for static and frequently referenced data, to make the client experience smoother
+
+=====================================================================================================================
+
+Q2. If this service integrates with an external ML model, how would you:
+
+a. Control latency?
+Ans: to control latency, we can
+        - integrate a reasonable timeout for the ML service call
+        - use non-blocking e.g., async HTTP calls with `keep-alive` pooling (can keep the services in same VPC or shared network)
+        - cache the ML results, based on frequency and stale time (e.g., renew data only every hour for certain request, if we know that ML service returned value only changes each hour once for this set of request)
+        - independently use auto-scaling and optimisation for ML service, if possible, as well
+
+==============================
+
+b. Prevent cascading failures?
+Ans: to prevent the cascading failure, we can 
+        - make the system to call the ML service only certain times, and put a logic to identify the service failure
+        - implement a fallback logic to generate values, or use the old ones, if possible, in case of unreachable ML service
+        - further, if budget allows, create a discovery service to find the dead ML service in advance and do the needful
+
+==============================
+
+Implement fallback logic?
+Ans: fallback logic:
+        - if possible, can use the previous returned values for the same set of requests
+        - if not at possible or no previous values found, we can return a valid response stating that
+        - maybe can agree upon default values for different types of requests and return that instead of no values
+
+=====================================================================================================================
+Q3. How would you deploy this service in AWS or Azure for production reliability?
+Ans: for cloud production deployment we can follow these things:
+        - use compute service to deploy the service, with auto-scaling and health-check and insights enabled, behind a reverse proxy and/or LB
+        - use the chosen cloud provided PostgreSQL/MySQL out of the box service along with replicas, with backup and dbBrain type services enabled
+        - use Redis (or similar) for static data and frequently accessed data
+        - if possible, keep the cache instances and db instances as Multi-AZ for transactional storage
+        - keep the services in same VPC to enable internal HTTP type calls 
+=====================================================================================================================
