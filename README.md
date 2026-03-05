@@ -24,8 +24,6 @@ app/
   main.py
   models.py
   schemas.py
-scripts/
-  test_assess_risk.py
 requirements.txt
 README.md
 ```
